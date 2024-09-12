@@ -112,50 +112,8 @@ graph TD
 - In the end of the each week the architecture will generate 3 diff keys points and a random topic will be selected so that we will never know what will happen next.
 - Ok here is what I am thinking:
 
-![image.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/f11c3a31-b341-4f79-9c8e-ee61073f66e7/9d770ea5-c69b-4ecf-a16b-c63e39669e86/image.png)
+![chart](https://github.com/user-attachments/assets/ee7a3904-b623-4c85-ac94-bdff5ed1ff33)
 
-```mermaid
-flowchart TD
-    W1[Week 1] --> P1[Plot 1] & P2[Plot 2] & P3[Plot 3] & PN[Plot N]
-    
-    subgraph Plot1 [Plot 1 Details]
-        direction TB
-        P1 --> A1[Article 1]
-        A1 --> A2[Article 2]
-        A2 --> A3[Article 3]
-        A3 --> A4[Article 4]
-        A4 --> A5[Article 5]
-        A5 --> A6[Article 6]
-        A6 --> A7[Article 7]
-    end
-    
-    subgraph KeyEvents [Key Events]
-        direction LR
-        KE1[Key Event 1]
-        KE2[Key Event 2]
-        KE3[Key Event 3]
-    end
-    
-    KeyEvents -.-> Plot1
-    
-    P2 --> DS2[Do The Same<br/>For All]
-    P3 --> DS3[Do The Same<br/>For All]
-    PN --> DSN[Do The Same<br/>For All]
-    
-    classDef week fill:#FFC0CB,stroke:#333,stroke-width:2px
-    classDef plot fill:#90EE90,stroke:#333,stroke-width:2px
-    classDef article fill:#FFFFE0,stroke:#333,stroke-width:1px
-    classDef same fill:#F0F0F0,stroke:#333,stroke-width:1px,stroke-dasharray:5 5
-    classDef keyEvent fill:#ADD8E6,stroke:#333,stroke-width:1px
-    
-    class W1 week
-    class P1,P2,P3,PN plot
-    class A1,A2,A3,A4,A5,A6,A7 article
-    class DS2,DS3,DSN same
-    class KE1,KE2,KE3 keyEvent
-    
-    style KeyEvents fill:#FFFFFF,stroke:#333,stroke-width:2px,stroke-dasharray:5 5
-```
 
 ## Location:
 
