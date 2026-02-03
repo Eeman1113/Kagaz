@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kagaz — The Other World Gazette</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=UnifrakturMaguntia&family=IM+Fell+English:ital@0;1&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --paper-color: #f4f1ea;
+            --ink-color: #1a1a1a;
+            --accent-color: #8b0000;
+            --aged-color: #d4c5b0;
+        }
+
+        body {
+            background-color: #e8e4dc;
+            font-family: 'IM Fell English', serif;
+            color: var(--ink-color);
+            overflow-x: hidden;
+        }
+
+        .newspaper-texture {
+            background-image: 
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px),
+                repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px),
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.08'/%3E%3C/svg%3E");
+            background-color: var(--paper-color);
+        }
+
+        .masthead {
+            font-family: 'UnifrakturMaguntia', cursive;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+            letter-spacing: -0.02em;
+        }
+
+        .headline {
+            font-family: 'Playfair Display', serif;
+            font-weight: 900;
+            line-height: 0.9;
+        }
+
+        .body-text {
+            font-family: 'IM Fell English', serif;
+            text-align: justify;
+            hyphens: auto;
+        }
+
+        .drop-cap::first-letter {
+            float: left;
+            font-family: 'Playfair Display', serif;
+            font-size: 4rem;
+            line-height: 0.8;
+            padding-right: 0.1em;
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .column-rule {
+            column-rule: 1px solid #1a1a1a;
+        }
+
+        .weathered {
+            position: relative;
+        }
+
+        .weathered::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 30%, rgba(139, 0, 0, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 70%, rgba(0,0,0,0.05) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .stamp {
+            font-family: 'Space Mono', monospace;
+            border: 3px double var(--accent-color);
+            color: var(--accent-color);
+            transform: rotate(-5deg);
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            mix-blend-mode: multiply;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.8s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .generating-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity:0.5; }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #d4c5b0;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #8b0000;
+            border-radius: 5px;
+        }
+
+        .ornament {
+            text-align: center;
+            font-size: 1.5rem;
+            letter-spacing: 1rem;
+            color: var(--accent-color);
+            margin: 2rem 0;
+        }
+
+        .admin-panel {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #f4f1ea;
+        }
+
+        input[type="password"], input[type="text"] {
+            background: rgba(244, 241, 234, 0.1);
+            border: 1px solid rgba(244, 241, 234, 0.3);
+            color: #f4f1ea;
+            font-family: 'Space Mono', monospace;
+        }
+
+        input[type="password"]:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #8b0000;
+            background: rgba(244, 241, 234, 0.15);
+        }
+
+        .hidden { display: none !important; }
+        
+        .story-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .story-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Admin Login Overlay -->
+    <div id="adminOverlay" class="fixed inset-0 z-50 admin-panel flex items-center justify-center hidden">
+        <div class="max-w-md w-full p-8 border-2 border-red-900 relative">
+            <button onclick="closeAdmin()" class="absolute top-4 right-4 text-gray-400 hover:text-white">✕</button>
+            <h2 class="text-2xl font-bold mb-6 font-serif text-red-500">Editor's Entrance</h2>
+            
+            <div id="passwordStep">
+                <label class="block mb-2 text-sm uppercase tracking-widest">Enter Password</label>
+                <input type="password" id="adminPassword" class="w-full px-4 py-3 mb-4" placeholder="•••••">
+                <button onclick="checkPassword()" class="w-full bg-red-900 hover:bg-red-800 text-white py-3 font-bold uppercase tracking-wider transition">Enter</button>
+            </div>
+
+            <div id="apiStep" class="hidden">
+                <label class="block mb-2 text-sm uppercase tracking-widest">OpenRouter API Key</label>
+                <input type="text" id="apiKey" class="w-full px-4 py-3 mb-4 text-sm" placeholder="sk-or-v1-...">
+                <p class="text-xs text-gray-400 mb-4">Using: moonshotai/kimi-k2.5</p>
+                <button onclick="startGeneration()" class="w-full bg-red-900 hover:bg-red-800 text-white py-3 font-bold uppercase tracking-wider transition generating-pulse">
+                    Generate This Week's Kagaz
+                </button>
+            </div>
+
+            <div id="generatingStep" class="hidden text-center py-8">
+                <div class="text-4xl mb-4">📰</div>
+                <p class="text-lg mb-2">Printing the news from another world...</p>
+                <p id="generationStatus" class="text-sm text-gray-400 font-mono">Initializing...</p>
+                <div class="mt-4 w-full bg-gray-700 h-2 rounded-full overflow-hidden">
+                    <div id="progressBar" class="bg-red-600 h-full w-0 transition-all duration-500"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="border-b-2 border-black bg-[#f4f1ea] sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="text-xs font-bold tracking-widest uppercase hidden sm:block">
+                Est. 1847 • Another World Edition
+            </div>
+            <button onclick="openAdmin()" class="text-xs border border-black px-3 py-1 hover:bg-black hover:text-[#f4f1ea] transition uppercase tracking-wider">
+                Editor's Login
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Newspaper Container -->
+    <main id="newspaperContainer" class="newspaper-texture min-h-screen pb-20 weathered">
+        
+        <!-- Masthead -->
+        <header class="text-center pt-12 pb-8 px-4 border-b-4 border-double border-black mx-4 sm:mx-8 lg:mx-16">
+            <div class="flex justify-between items-end mb-4 text-xs font-bold uppercase tracking-widest border-b border-black pb-2">
+                <span id="issueNumber">Vol. MDCCXLVII</span>
+                <span id="currentDate">Loading...</span>
+                <span id="price">Two Silver Pieces</span>
+            </div>
+            
+            <h1 class="masthead text-6xl sm:text-8xl lg:text-9xl mb-4 text-black">Kagaz</h1>
+            
+            <div class="border-t border-b border-black py-2 flex justify-center items-center gap-8 text-sm uppercase tracking-widest font-bold">
+                <span>The Voice of the Void</span>
+                <span class="text-2xl">✦</span>
+                <span>Truth Beyond Worlds</span>
+                <span class="text-2xl">✦</span>
+                <span>Weekly Dispatch</span>
+            </div>
+        </header>
+
+        <!-- Breaking News Banner (if exists) -->
+        <div id="breakingBanner" class="hidden bg-black text-[#f4f1ea] text-center py-3 px-4">
+            <span class="font-bold uppercase tracking-[0.3em] text-red-500 animate-pulse">Breaking:</span>
+            <span id="breakingText" class="ml-2 font-serif italic text-lg"></span>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-8 lg:px-16 py-8">
+            
+            <!-- Top Stories Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-12">
+                
+                <!-- Main Feature (Span 8) -->
+                <article class="lg:col-span-8 border-r border-black pr-0 lg:pr-8" id="mainStory">
+                    <div class="mb-4">
+                        <span class="stamp text-xs">World Affairs</span>
+                    </div>
+                    <h2 class="headline text-4xl sm:text-5xl lg:text-6xl mb-4" id="mainHeadline">
+                        The Crystal Spires of Aethelgard Begin to Sing Once More
+                    </h2>
+                    <p class="text-sm uppercase tracking-widest mb-4 text-gray-600 border-b border-gray-400 pb-2" id="mainByline">
+                        By Correspondent Void-Touched • From the Northern Reaches
+                    </p>
+                    <div class="body-text text-lg leading-relaxed drop-cap columns-1 sm:columns-2 gap-8" id="mainContent">
+                        <p>After three centuries of silence, the obsidian monoliths that serve as both architecture and antenna for the lost civilization of Aethelgard have begun emitting their harmonic frequencies once again. Scholars from the Academy of Whispers report that the tones correspond to no known musical scale, instead resonating at frequencies that exist partially outside our dimensional plane...</p>
+                    </div>
+                    <div class="mt-6 text-sm italic text-gray-600 border-t border-gray-400 pt-2" id="mainContinued">
+                        Continued on Page 4 • Column 2
+                    </div>
+                </article>
+
+                <!-- Side Stories (Span 4) -->
+                <div class="lg:col-span-4 space-y-6" id="sideStories">
+                    <article class="border-b border-black pb-4 story-card">
+                        <span class="text-xs font-bold uppercase tracking-wider text-red-800">Politics</span>
+                        <h3 class="headline text-2xl mt-1 mb-2">The Council of Shadows Reconvenes</h3>
+                        <p class="body-text text-sm leading-snug">Unseen for seventy years, the translucent senators emerge from their pocket dimensions to debate the upcoming Convergence...</p>
+                    </article>
+
+                    <article class="border-b border-black pb-4 story-card">
+                        <span class="text-xs font-bold uppercase tracking-wider text-red-800">Economy</span>
+                        <h3 class="headline text-2xl mt-1 mb-2">Star-Metal Prices Plummet</h3>
+                        <p class="body-text text-sm leading-snug">Following the discovery of a new meteorite belt in the southern sky, smiths rejoice while investors panic...</p>
+                    </article>
+
+                    <div class="bg-black text-[#f4f1ea] p-4 story-card">
+                        <span class="text-xs font-bold uppercase tracking-wider text-red-400">Advertisement</span>
+                        <p class="font-serif italic text-lg mt-2 mb-2">"Lost your shadow? We can help."</p>
+                        <p class="text-xs font-mono">The Shadow-Brokers Guild • Lower District • Open Moon to Moon</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ornament">❦ ❦ ❦</div>
+
+            <!-- Secondary Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12" id="secondaryStories">
+                <!-- Populated dynamically -->
+            </div>
+
+            <!-- Ongoing Stories Section -->
+            <div class="border-t-4 border-double border-black pt-8 mb-12">
+                <h3 class="text-center font-bold uppercase tracking-[0.2em] text-2xl mb-8">Continuing Sagas</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="ongoingStories">
+                    <!-- Populated dynamically based on previous weeks -->
+                </div>
+            </div>
+
+            <!-- Classifieds / Small Ads -->
+            <div class="border-t-2 border-black pt-6">
+                <h3 class="text-center text-sm font-bold uppercase tracking-widest mb-6">Classified Notices</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-mono" id="classifieds">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <footer class="border-t-4 border-double border-black mt-16 py-8 text-center text-xs uppercase tracking-widest">
+            <p class="mb-2">Kagaz — Printed in the Space Between Stars</p>
+            <p class="text-gray-500">All realities reserved • Void where prohibited by physics</p>
+        </footer>
+    </main>
+
+    <!-- No Paper State -->
+    <div id="noPaperState" class="hidden min-h-screen bg-[#1a1a1a] text-[#f4f1ea] flex items-center justify-center">
+        <div class="text-center p-8">
+            <div class="text-6xl mb-4">📰</div>
+            <h1 class="text-4xl font-serif mb-4">No Edition Available</h1>
+            <p class="text-gray-400 mb-8">The printers have not yet prepared this week's dispatch from the other world.</p>
+            <button onclick="openAdmin()" class="border border-[#f4f1ea] px-6 py-3 hover:bg-[#f4f1ea] hover:text-[#1a1a1a] transition uppercase tracking-widest">
+                Enter as Editor
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // State Management
+        const STORAGE_KEY = 'kagaz_newspaper_data';
+        const CURRENT_WEEK_KEY = 'kagaz_current_week';
+        
+        let currentPaper = null;
+        let isAdmin = false;
+
+        // World Building Constants
+        const WORLD_ELEMENTS = {
+            locations: [
+                'Aethelgard', 'The Void Markets', 'Crystal Spires', 'Shadow District', 
+                'The Academy of Whispers', 'Star-Metal Foundry', 'The Pale City',
+                'Mirror-Sea Coast', 'Obsidian Wastes', 'The Clockwork Gardens',
+                'Echo-Valley', 'The Shifting Library', 'Moon-Forged Temples'
+            ],
+            factions: [
+                'Council of Shadows', 'The Luminous Order', 'Void-Touched Merchants',
+                'Chronomancers Guild', 'The Silent Architects', 'Star-Weavers',
+                'The Hollow Parliament', 'Mirror-Walkers', 'The Aetheric Collective'
+            ],
+            phenomena: [
+                'Dimensional Bleed', 'Echo Storms', 'Crystal Resonance',
+                'Shadow Migration', 'Temporal Echoes', 'Aetheric Convergence',
+                'Void Whispers', 'Star Alignment', 'Reality Fracture'
+            ],
+            characters: [
+                'The Void-Touched Correspondent', 'Chronomancer Elara', 'Shadow-Speaker Kael',
+                'The Mirror-Walker', 'Archivist Null', 'Star-Weaver Orien',
+                'The Hollow Senator', 'Aetheric Merchant Zyx'
+            ]
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCurrentPaper();
+            updateDate();
+        });
+
+        function updateDate() {
+            const date = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('currentDate').textContent = date.toLocaleDateString('en-US', options);
+        }
+
+        function loadCurrentPaper() {
+            const weekId = getWeekId();
+            const stored = localStorage.getItem(STORAGE_KEY);
+            
+            if (stored) {
+                const papers = JSON.parse(stored);
+                currentPaper = papers[weekId];
+                
+                if (currentPaper) {
+                    renderPaper(currentPaper);
+                } else {
+                    showNoPaper();
+                }
+            } else {
+                showNoPaper();
+            }
+        }
+
+        function getWeekId() {
+            const now = new Date();
+            const startOfYear = new Date(now.getFullYear(), 0, 1);
+            const pastDays = (now - startOfYear) / 86400000;
+            return `week-${Math.ceil((pastDays + startOfYear.getDay() + 1) / 7)}-${now.getFullYear()}`;
+        }
+
+        function showNoPaper() {
+            document.getElementById('newspaperContainer').classList.add('hidden');
+            document.getElementById('noPaperState').classList.remove('hidden');
+        }
+
+        function renderPaper(paper) {
+            document.getElementById('noPaperState').classList.add('hidden');
+            document.getElementById('newspaperContainer').classList.remove('hidden');
+            
+            // Update metadata
+            document.getElementById('issueNumber').textContent = paper.issueNumber || 'Vol. Unknown';
+            
+            // Main story
+            if (paper.mainStory) {
+                document.getElementById('mainHeadline').textContent = paper.mainStory.headline;
+                document.getElementById('mainByline').textContent = paper.mainStory.byline;
+                document.getElementById('mainContent').innerHTML = paper.mainStory.content;
+                if (paper.mainStory.continued) {
+                    document.getElementById('mainContinued').textContent = paper.mainStory.continued;
+                }
+            }
+
+            // Side stories
+            if (paper.sideStories) {
+                const sideContainer = document.getElementById('sideStories');
+                sideContainer.innerHTML = paper.sideStories.map(story => `
+                    <article class="border-b border-black pb-4 story-card fade-in">
+                        <span class="text-xs font-bold uppercase tracking-wider text-red-800">${story.category}</span>
+                        <h3 class="headline text-2xl mt-1 mb-2">${story.headline}</h3>
+                        <p class="body-text text-sm leading-snug">${story.excerpt}</p>
+                    </article>
+                `).join('');
+            }
+
+            // Secondary stories
+            if (paper.secondaryStories) {
+                const secContainer = document.getElementById('secondaryStories');
+                secContainer.innerHTML = paper.secondaryStories.map(story => `
+                    <article class="story-card fade-in">
+                        <span class="text-xs font-bold uppercase tracking-wider text-gray-600">${story.category}</span>
+                        <h3 class="headline text-xl mt-1 mb-2">${story.headline}</h3>
+                        <p class="body-text text-sm leading-relaxed">${story.excerpt}</p>
+                    </article>
+                `).join('');
+            }
+
+            // Ongoing stories
+            if (paper.ongoingStories && paper.ongoingStories.length > 0) {
+                const ongContainer = document.getElementById('ongoingStories');
+                ongContainer.innerHTML = paper.ongoingStories.map(story => `
+                    <div class="border-l-2 border-red-800 pl-4 story-card fade-in">
+                        <h4 class="font-bold text-lg mb-1">${story.title}</h4>
+                        <p class="text-sm text-gray-600 mb-2">Week ${story.week} of ${story.totalWeeks}</p>
+                        <p class="text-sm italic">${story.update}</p>
+                    </div>
+                `).join('');
+            }
+
+            // Classifieds
+            if (paper.classifieds) {
+                const classContainer = document.getElementById('classifieds');
+                classContainer.innerHTML = paper.classifieds.map(ad => `
+                    <div class="border border-gray-400 p-2 text-center hover:bg-gray-100 cursor-pointer transition">
+                        <p class="font-bold uppercase text-[10px] mb-1">${ad.category}</p>
+                        <p class="font-serif text-xs">${ad.text}</p>
+                    </div>
+                `).join('');
+            }
+
+            // Breaking news banner
+            if (paper.breakingNews) {
+                document.getElementById('breakingBanner').classList.remove('hidden');
+                document.getElementById('breakingText').textContent = paper.breakingNews;
+            }
+        }
+
+        // Admin Functions
+        function openAdmin() {
+            document.getElementById('adminOverlay').classList.remove('hidden');
+            document.getElementById('passwordStep').classList.remove('hidden');
+            document.getElementById('apiStep').classList.add('hidden');
+            document.getElementById('generatingStep').classList.add('hidden');
+            document.getElementById('adminPassword').value = '';
+        }
+
+        function closeAdmin() {
+            document.getElementById('adminOverlay').classList.add('hidden');
+        }
+
+        function checkPassword() {
+            const input = document.getElementById('adminPassword').value;
+            if (input === 'eeman') {
+                document.getElementById('passwordStep').classList.add('hidden');
+                document.getElementById('apiStep').classList.remove('hidden');
+            } else {
+                alert('Incorrect password');
+            }
+        }
+
+        async function startGeneration() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            if (!apiKey) {
+                alert('Please enter an API key');
+                return;
+            }
+
+            document.getElementById('apiStep').classList.add('hidden');
+            document.getElementById('generatingStep').classList.remove('hidden');
+
+            try {
+                await generateNewspaper(apiKey);
+                document.getElementById('generationStatus').textContent = 'Finalizing layout...';
+                setTimeout(() => {
+                    closeAdmin();
+                    loadCurrentPaper();
+                }, 1000);
+            } catch (error) {
+                alert('Error generating newspaper: ' + error.message);
+                document.getElementById('generatingStep').classList.add('hidden');
+                document.getElementById('apiStep').classList.remove('hidden');
+            }
+        }
+
+        async function generateNewspaper(apiKey) {
+            const updateStatus = (msg, progress) => {
+                document.getElementById('generationStatus').textContent = msg;
+                document.getElementById('progressBar').style.width = progress + '%';
+            };
+
+            // Load previous weeks for context
+            const stored = localStorage.getItem(STORAGE_KEY);
+            const previousPapers = stored ? JSON.parse(stored) : {};
+            const prevWeeks = Object.values(previousPapers).slice(-3); // Last 3 weeks
+
+            updateStatus('Consulting the archives...', 10);
+
+            // Generate main feature
+            updateStatus('Writing lead story from the Void...', 20);
+            const mainStory = await generateStory(apiKey, 'main', null, prevWeeks);
+
+            updateStatus('Gathering side dispatches...', 40);
+            const sideStories = await Promise.all([
+                generateStory(apiKey, 'side', 'Politics', prevWeeks),
+                generateStory(apiKey, 'side', 'Economy', prevWeeks),
+                generateStory(apiKey, 'side', 'Strange Events', prevWeeks)
+            ]);
+
+            updateStatus('Collecting local news...', 60);
+            const secondaryStories = await Promise.all([
+                generateStory(apiKey, 'secondary', 'Culture', prevWeeks),
+                generateStory(apiKey, 'secondary', 'Science', prevWeeks),
+                generateStory(apiKey, 'secondary', 'Oddities', prevWeeks)
+            ]);
+
+            updateStatus('Checking ongoing sagas...', 75);
+            const ongoingStories = await generateOngoingStories(apiKey, prevWeeks);
+
+            updateStatus('Printing classifieds...', 85);
+            const classifieds = generateClassifieds();
+
+            updateStatus('Binding edition...', 95);
+
+            const weekId = getWeekId();
+            const issueNum = 'Vol. ' + (new Date().getFullYear() - 1847) + ' - No. ' + Math.floor(Math.random() * 900 + 100);
+
+            const newPaper = {
+                weekId,
+                issueNumber: issueNum,
+                generatedAt: new Date().toISOString(),
+                mainStory,
+                sideStories,
+                secondaryStories,
+                ongoingStories,
+                classifieds,
+                breakingNews: Math.random() > 0.7 ? await generateBreakingNews(apiKey) : null
+            };
+
+            // Save to localStorage
+            const allPapers = stored ? JSON.parse(stored) : {};
+            allPapers[weekId] = newPaper;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allPapers));
+        }
+
+        async function generateStory(apiKey, type, category, previousWeeks) {
+            const context = buildWorldContext(previousWeeks);
+            
+            let prompt;
+            if (type === 'main') {
+                prompt = `You are a journalist for "Kagaz", a newspaper from another world - a fantasy/sci-fi realm where magic and strange technology coexist. Write a major front-page news story (600 words) with the following requirements:
+
+Context from this world: ${context}
+Tone: Serious, atmospheric, slightly mysterious newspaper journalism
+Structure: Headline, Byline (include a fictional reporter name with a title like "Void-Touched" or "Star-Weaver"), and 3-4 paragraphs of content
+Style: Use drop-cap worthy opening paragraph, journalistic inverted pyramid style, mention specific locations and factions from the world
+Include: A "Continued on Page X" reference at the end
+
+Return ONLY a JSON object with this structure:
+{
+  "headline": "The headline - dramatic but journalistic",
+  "byline": "By Name, Title • Location",
+  "content": "<p>First paragraph with drop-cap...</p><p>Second...</p>",
+  "continued": "Continued on Page 4 • Column 2"
+}`;
+            } else if (type === 'side') {
+                prompt = `Write a short side-bar news story (150 words) for Kagaz newspaper from another world. Category: ${category}. Context: ${context}. Return JSON: {"headline": "...", "category": "${category}", "excerpt": "..."}`;
+            } else {
+                prompt = `Write a brief news item (100 words) for Kagaz from another world. Category: ${category}. Context: ${context}. Return JSON: {"headline": "...", "category": "${category}", "excerpt": "..."}`;
+            }
+
+            const response = await callOpenRouter(apiKey, prompt);
+            return JSON.parse(response);
+        }
+
+        async function generateOngoingStories(apiKey, previousWeeks) {
+            // Check if there are ongoing stories to continue
+            const ongoing = [];
+            
+            // Chance to continue previous stories or start new sagas
+            if (previousWeeks.length > 0) {
+                const lastWeek = previousWeeks[previousWeeks.length - 1];
+                if (lastWeek.ongoingStories) {
+                    for (let story of lastWeek.ongoingStories) {
+                        if (story.week < story.totalWeeks && Math.random() > 0.3) {
+                            const prompt = `Continue this ongoing news saga for Kagaz newspaper (50 words update): "${story.title}" currently in week ${story.week + 1} of ${story.totalWeeks}. Previous: ${story.update}. Return JSON: {"title": "${story.title}", "week": ${story.week + 1}, "totalWeeks": ${story.totalWeeks}, "update": "..."}`;
+                            const response = await callOpenRouter(apiKey, prompt);
+                            ongoing.push(JSON.parse(response));
+                        }
+                    }
+                }
+            }
+
+            // Add new saga occasionally
+            if (ongoing.length < 3 && Math.random() > 0.5) {
+                const prompt = `Start a new multi-week news saga for Kagaz newspaper from another world (50 words setup). Return JSON: {"title": "...", "week": 1, "totalWeeks": ${Math.floor(Math.random() * 4 + 3)}, "update": "..."}`;
+                const response = await callOpenRouter(apiKey, prompt);
+                ongoing.push(JSON.parse(response));
+            }
+
+            return ongoing;
+        }
+
+        async function generateBreakingNews(apiKey) {
+            const prompt = `Write a one-sentence breaking news alert for Kagaz from another world. Something urgent and mysterious. Return only the sentence.`;
+            return await callOpenRouter(apiKey, prompt);
+        }
+
+        function generateClassifieds() {
+            const categories = ['For Sale', 'Employment', 'Services', 'Lost & Found', 'Housing', 'Misc'];
+            const templates = [
+                { cat: 'Services', text: 'Shadow retrieval services. Discreet.' },
+                { cat: 'For Sale', text: 'Slightly used crystal ball. Sees mostly Tuesdays.' },
+                { cat: 'Employment', text: 'Chronomancers wanted. Experience with paradoxes preferred.' },
+                { cat: 'Lost', text: 'Lost: One black cat. Answers to "Void".' },
+                { cat: 'Housing', text: 'Room available in pocket dimension.' },
+                { cat: 'Services', text: 'Translator for Elder Tongues.' },
+                { cat: 'For Sale', text: 'Star-metal ingots. Bulk discount.' },
+                { cat: 'Misc', text: 'Will trade memories for gold.' }
+            ];
+            
+            return templates.sort(() => 0.5 - Math.random()).slice(0, 8);
+        }
+
+        function buildWorldContext(previousWeeks) {
+            if (previousWeeks.length === 0) {
+                return `This is the first edition. Establish the world: A realm where ${WORLD_ELEMENTS.phenomena[0]} is common, ruled by the ${WORLD_ELEMENTS.factions[0]}, featuring locations like ${WORLD_ELEMENTS.locations[0]}.`;
+            }
+            
+            const recent = previousWeeks[previousWeeks.length - 1];
+            return `Recent events: ${recent.mainStory.headline}. Ongoing situations: ${recent.ongoingStories ? recent.ongoingStories.map(s => s.title).join(', ') : 'none'}.`;
+        }
+
+        async function callOpenRouter(apiKey, prompt) {
+            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json',
+                    'HTTP-Referer': window.location.href,
+                    'X-Title': 'Kagaz Newspaper'
+                },
+                body: JSON.stringify({
+                    model: 'moonshotai/kimi-k2.5',
+                    messages: [
+                        {
+                            role: 'system',
+                            content: 'You are a creative writer for a newspaper from a fantasy world called "Kagaz". Write atmospheric, slightly surreal journalism that blends magic and mundane life.'
+                        },
+                        {
+                            role: 'user',
+                            content: prompt
+                        }
+                    ],
+                    temperature: 0.9,
+                    max_tokens: 2000
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('API call failed: ' + response.statusText);
+            }
+
+            const data = await response.json();
+            let content = data.choices[0].message.content;
+            
+            // Clean up JSON if wrapped in markdown
+            content = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+            
+            return content;
+        }
+
+        // Close admin on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeAdmin();
+            }
+        });
+    </script>
+</body>
+</html>
